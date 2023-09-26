@@ -54,12 +54,12 @@ def spmd_main(local_world_size, local_rank):
         key: os.environ[key]
         for key in ("MASTER_ADDR", "MASTER_PORT", "RANK", "WORLD_SIZE")
     }
-    
+
     if sys.platform == "win32":
         # Distributed package only covers collective communications with Gloo
         # backend and FileStore on Windows platform. Set init_method parameter
         # in init_process_group to a local file.
-        if "INIT_METHOD" in os.environ.keys():
+        if "INIT_METHOD" in os.environ:
             print(f"init_method is {os.environ['INIT_METHOD']}")
             url_obj = urlparse(os.environ["INIT_METHOD"])
             if url_obj.scheme.lower() != "file":

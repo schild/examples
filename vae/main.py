@@ -123,8 +123,11 @@ def test(epoch):
                 n = min(data.size(0), 8)
                 comparison = torch.cat([data[:n],
                                       recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
-                save_image(comparison.cpu(),
-                         'results/reconstruction_' + str(epoch) + '.png', nrow=n)
+                save_image(
+                    comparison.cpu(),
+                    f'results/reconstruction_{str(epoch)}.png',
+                    nrow=n,
+                )
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
@@ -136,5 +139,4 @@ if __name__ == "__main__":
         with torch.no_grad():
             sample = torch.randn(64, 20).to(device)
             sample = model.decode(sample).cpu()
-            save_image(sample.view(64, 1, 28, 28),
-                       'results/sample_' + str(epoch) + '.png')
+            save_image(sample.view(64, 1, 28, 28), f'results/sample_{str(epoch)}.png')

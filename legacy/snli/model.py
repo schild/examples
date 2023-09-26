@@ -72,5 +72,4 @@ class SNLIClassifier(nn.Module):
             hypo_embed = self.relu(self.projection(hypo_embed))
         premise = self.encoder(prem_embed)
         hypothesis = self.encoder(hypo_embed)
-        scores = self.out(torch.cat([premise, hypothesis], 1))
-        return scores
+        return self.out(torch.cat([premise, hypothesis], 1))

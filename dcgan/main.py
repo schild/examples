@@ -56,7 +56,7 @@ if torch.cuda.is_available() and not opt.cuda:
 
 if torch.backends.mps.is_available() and not opt.mps:
     print("WARNING: You have mps device, to enable macOS GPU run with --mps")
-  
+
 if opt.dataroot is None and str(opt.dataset).lower() != 'fake':
     raise ValueError("`dataroot` parameter is required for dataset \"%s\"" % opt.dataset)
 
@@ -71,7 +71,7 @@ if opt.dataset in ['imagenet', 'folder', 'lfw']:
                                ]))
     nc=3
 elif opt.dataset == 'lsun':
-    classes = [ c + '_train' for c in opt.classes.split(',')]
+    classes = [f'{c}_train' for c in opt.classes.split(',')]
     dataset = dset.LSUN(root=opt.dataroot, classes=classes,
                         transform=transforms.Compose([
                             transforms.Resize(opt.imageSize),
@@ -158,11 +158,11 @@ class Generator(nn.Module):
         )
 
     def forward(self, input):
-        if input.is_cuda and self.ngpu > 1:
-            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
-        else:
-            output = self.main(input)
-        return output
+        return (
+            nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+            if input.is_cuda and self.ngpu > 1
+            else self.main(input)
+        )
 
 
 netG = Generator(ngpu).to(device)
@@ -268,9 +268,7 @@ for epoch in range(opt.niter):
               % (epoch, opt.niter, i, len(dataloader),
                  errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
         if i % 100 == 0:
-            vutils.save_image(real_cpu,
-                    '%s/real_samples.png' % opt.outf,
-                    normalize=True)
+            vutils.save_image(real_cpu, f'{opt.outf}/real_samples.png', normalize=True)
             fake = netG(fixed_noise)
             vutils.save_image(fake.detach(),
                     '%s/fake_samples_epoch_%03d.png' % (opt.outf, epoch),

@@ -82,9 +82,9 @@ def test():
 
 
 def checkpoint(epoch):
-    model_out_path = "model_epoch_{}.pth".format(epoch)
+    model_out_path = f"model_epoch_{epoch}.pth"
     torch.save(model, model_out_path)
-    print("Checkpoint saved to {}".format(model_out_path))
+    print(f"Checkpoint saved to {model_out_path}")
 
 for epoch in range(1, opt.nEpochs + 1):
     train(epoch)

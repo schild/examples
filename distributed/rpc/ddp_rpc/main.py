@@ -135,7 +135,7 @@ def run_worker(rank, world_size):
         # Run the training loop on trainers.
         futs = []
         for trainer_rank in [0, 1]:
-            trainer_name = "trainer{}".format(trainer_rank)
+            trainer_name = f"trainer{trainer_rank}"
             fut = rpc.rpc_async(
                 trainer_name, _run_trainer, args=(remote_emb_module, trainer_rank)
             )
@@ -151,7 +151,7 @@ def run_worker(rank, world_size):
         )
 
         # Initialize RPC.
-        trainer_name = "trainer{}".format(rank)
+        trainer_name = f"trainer{rank}"
         rpc.init_rpc(
             trainer_name,
             rank=rank,
@@ -159,7 +159,7 @@ def run_worker(rank, world_size):
             rpc_backend_options=rpc_backend_options,
         )
 
-        # Trainer just waits for RPCs from master.
+            # Trainer just waits for RPCs from master.
     else:
         rpc.init_rpc(
             "ps",
@@ -167,9 +167,6 @@ def run_worker(rank, world_size):
             world_size=world_size,
             rpc_backend_options=rpc_backend_options,
         )
-        # parameter server do nothing
-        pass
-
     # block until all rpcs finish
     rpc.shutdown()
 

@@ -29,10 +29,7 @@ def _parameter_rrefs(module):
     Create one RRef for each parameter in the given local module, and return a
     list of RRefs.
     """
-    param_rrefs = []
-    for param in module.parameters():
-        param_rrefs.append(RRef(param))
-    return param_rrefs
+    return [RRef(param) for param in module.parameters()]
 
 
 class EmbeddingTable(nn.Module):

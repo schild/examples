@@ -74,9 +74,6 @@ def run_worker(rank, world_size):
         _run_trainer()
     else:
         rpc.init_rpc("ps", rank=rank, world_size=world_size)
-        # parameter server does nothing
-        pass
-
     # block until all rpcs finish
     rpc.shutdown()
 

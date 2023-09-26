@@ -40,12 +40,8 @@ def lower_to_elementwise_interpreter(orig_mod : torch.nn.Module) -> torch.nn.Mod
         target, args, out_name = n.target, n.args, n.name
         assert len(n.kwargs) == 0, "kwargs currently not supported"
 
-        if n.op == 'placeholder':
-            # Placeholders specify function argument names. Save these
-            # for later when we generate the wrapper GraphModule
-            fn_input_names.append(target)
-        elif n.op == 'call_function':
-            assert target in target_to_name, "Unsupported call target " + target
+        if n.op == 'call_function':
+            assert target in target_to_name, f"Unsupported call target {target}"
             arg_names = []
             for arg in args:
                 if not isinstance(arg, torch.fx.Node):
@@ -63,8 +59,12 @@ def lower_to_elementwise_interpreter(orig_mod : torch.nn.Module) -> torch.nn.Mod
             if output_node is not None:
                 raise RuntimeError('Multiple output nodes!')
             output_node = n
+        elif n.op == 'placeholder':
+            # Placeholders specify function argument names. Save these
+            # for later when we generate the wrapper GraphModule
+            fn_input_names.append(target)
         else:
-            raise RuntimeError('Unsupported opcode ' + n.op)
+            raise RuntimeError(f'Unsupported opcode {n.op}')
 
     interpreter = torch.classes.NativeInterpretation.ElementwiseInterpreter()
     # Load constants
@@ -78,7 +78,6 @@ def lower_to_elementwise_interpreter(orig_mod : torch.nn.Module) -> torch.nn.Mod
     assert isinstance(output_node.args[0], torch.fx.Node)
     interpreter.set_output_name(output_node.args[0].name)
 
-    # ===== Stage 3: Create a wrapper GraphModule around the interpreter =====
     class WrapperModule(torch.nn.Module):
         def __init__(self, interpreter):
             super().__init__()
@@ -91,11 +90,9 @@ def lower_to_elementwise_interpreter(orig_mod : torch.nn.Module) -> torch.nn.Mod
     # 3) Returns the specified return value
 
     graph = torch.fx.Graph()
-    # Add placeholders for fn inputs
-    placeholder_nodes = []
-    for name in fn_input_names:
-        placeholder_nodes.append(graph.create_node('placeholder', name))
-
+    placeholder_nodes = [
+        graph.create_node('placeholder', name) for name in fn_input_names
+    ]
     # Get the interpreter object
     interpreter_node = graph.create_node('get_attr', 'interpreter')
 

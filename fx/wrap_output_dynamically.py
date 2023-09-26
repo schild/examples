@@ -43,12 +43,9 @@ activation_functions = {
 }
 
 def wrap_in_activation_function(m: GraphModule, fn: ActivationFunction) -> GraphModule:
-    # Get output node
-    output_node: Optional[Node] = None
-    for n in reversed(m.graph.nodes):
-        if n.op == "output":
-            output_node = n
-            break
+    output_node: Optional[Node] = next(
+        (n for n in reversed(m.graph.nodes) if n.op == "output"), None
+    )
     assert output_node
 
     # Get the actual output (the "input" of the output node). This is

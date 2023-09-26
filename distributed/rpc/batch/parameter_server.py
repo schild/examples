@@ -101,12 +101,10 @@ def run_trainer(ps_rref):
 def run_ps(trainers):
     timed_log("Start training")
     ps_rref = rpc.RRef(BatchUpdateParameterServer())
-    futs = []
-    for trainer in trainers:
-        futs.append(
-            rpc.rpc_async(trainer, run_trainer, args=(ps_rref,))
-        )
-
+    futs = [
+        rpc.rpc_async(trainer, run_trainer, args=(ps_rref,))
+        for trainer in trainers
+    ]
     torch.futures.wait_all(futs)
     timed_log("Finish training")
 

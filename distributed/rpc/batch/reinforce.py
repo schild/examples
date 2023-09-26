@@ -180,15 +180,14 @@ class Agent:
         with n_steps. Then it collects all actions and rewards, and use those to
         train the policy.
         """
-        futs = []
-        for ob_rref in self.ob_rrefs:
-            # make async RPC to kick off an episode on all observers
-            futs.append(ob_rref.rpc_async().run_episode(self.agent_rref, n_steps))
-
+        futs = [
+            ob_rref.rpc_async().run_episode(self.agent_rref, n_steps)
+            for ob_rref in self.ob_rrefs
+        ]
         # wait until all obervers have finished this episode
         rets = torch.futures.wait_all(futs)
         rewards = torch.stack([ret[0] for ret in rets]).cuda().t()
-        ep_rewards = sum([ret[1] for ret in rets]) / len(rets)
+        ep_rewards = sum(ret[1] for ret in rets) / len(rets)
 
         if self.batch:
             probs = torch.stack(self.saved_log_probs)

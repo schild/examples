@@ -109,15 +109,26 @@ def train(args):
 
             if args.checkpoint_model_dir is not None and (batch_id + 1) % args.checkpoint_interval == 0:
                 transformer.eval().cpu()
-                ckpt_model_filename = "ckpt_epoch_" + str(e) + "_batch_id_" + str(batch_id + 1) + ".pth"
+                ckpt_model_filename = f"ckpt_epoch_{str(e)}_batch_id_{str(batch_id + 1)}.pth"
                 ckpt_model_path = os.path.join(args.checkpoint_model_dir, ckpt_model_filename)
                 torch.save(transformer.state_dict(), ckpt_model_path)
                 transformer.to(device).train()
 
     # save model
     transformer.eval().cpu()
-    save_model_filename = "epoch_" + str(args.epochs) + "_" + str(time.ctime()).replace(' ', '_') + "_" + str(
-        args.content_weight) + "_" + str(args.style_weight) + ".model"
+    save_model_filename = (
+        (
+            (
+                f"epoch_{str(args.epochs)}_"
+                + str(time.ctime()).replace(' ', '_')
+                + "_"
+                + str(args.content_weight)
+            )
+            + "_"
+        )
+        + str(args.style_weight)
+        + ".model"
+    )
     save_model_path = os.path.join(args.save_model_dir, save_model_filename)
     torch.save(transformer.state_dict(), save_model_path)
 

@@ -175,8 +175,9 @@ def main():
 
         # check if we have "solved" the cart pole problem
         if running_reward > env.spec.reward_threshold:
-            print("Solved! Running reward is now {} and "
-                  "the last episode runs to {} time steps!".format(running_reward, t))
+            print(
+                f"Solved! Running reward is now {running_reward} and the last episode runs to {t} time steps!"
+            )
             break
 
 

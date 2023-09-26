@@ -56,16 +56,14 @@ def get_policies(cfg, rank):
         if bfloat_available and not cfg.use_fp16:
             mixed_precision_policy = policies.bfSixteen
             if rank == 0:
-                print(f"bFloat16 enabled for mixed precision - using bfSixteen policy")
+                print("bFloat16 enabled for mixed precision - using bfSixteen policy")
         elif cfg.use_fp16:
             mixed_precision_policy = policies.fpSixteen
             if rank == 0:
-                print(f"FP16 enabled. ")
+                print("FP16 enabled. ")
         else:
             # mixed_precision_policy = policies.fpSixteen
-            print(
-                f"bFloat16 support not present. Will use FP32, and not mixed precision"
-            )
+            print("bFloat16 support not present. Will use FP32, and not mixed precision")
 
     wrapping_policy = policies.get_t5_wrapper()
 
@@ -86,11 +84,11 @@ def fsdp_main(args):
     print("Size of train dataset: ", dataset['train'].shape)
     print("Size of Validation dataset: ", dataset['validation'].shape)
 
-   
+
     #wikihow(tokenizer, type_path, num_samples, input_length, output_length, print_text=False)
-    train_dataset = wikihow(tokenizer, 'train', 1500, 512, 150, False) 
+    train_dataset = wikihow(tokenizer, 'train', 1500, 512, 150, False)
     val_dataset = wikihow(tokenizer, 'validation', 300, 512, 150, False)
- 
+
     sampler1 = DistributedSampler(train_dataset, rank=rank, num_replicas=world_size, shuffle=True)
     sampler2 = DistributedSampler(val_dataset, rank=rank, num_replicas=world_size)
 
@@ -107,12 +105,12 @@ def fsdp_main(args):
 
     train_loader = torch.utils.data.DataLoader(train_dataset,**train_kwargs)
     val_loader = torch.utils.data.DataLoader(val_dataset, **test_kwargs)
- 
+
     torch.cuda.set_device(local_rank)
-    
+
     # Set up FSDP parameters
     mixed_precision_policy, t5_auto_wrap_policy = get_policies(train_config, rank)
-    
+
     # Apply FSDP wrapping to the model
     model = FSDP(model,
         auto_wrap_policy=t5_auto_wrap_policy,
@@ -120,7 +118,7 @@ def fsdp_main(args):
         sharding_strategy=fsdp_config.sharding_strategy,
         device_id=torch.cuda.current_device(),
         limit_all_gathers=fsdp_config.limit_all_gathers)
-    
+
     if fsdp_config.fsdp_activation_checkpointing:
         policies.apply_fsdp_checkpointing(model)
 
@@ -139,9 +137,9 @@ def fsdp_main(args):
         val_acc_tracking = []
         training_start_time = time.time()
 
-    if rank == 0 and args.track_memory:
-        mem_alloc_tracker = []
-        mem_reserved_tracker = []
+        if args.track_memory:
+            mem_alloc_tracker = []
+            mem_reserved_tracker = []
 
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()
@@ -149,7 +147,7 @@ def fsdp_main(args):
         if args.run_validation:
             curr_val_loss = validation(model, rank, world_size, val_loader)
         scheduler.step()
-        
+
         if rank == 0:
 
             print(f"--> epoch {epoch} completed...entering save and stats zone")
@@ -169,7 +167,7 @@ def fsdp_main(args):
                 )
 
         if train_config.save_model and curr_val_loss < best_val_loss:
-            
+
             if fsdp_config.checkpoint_type == StateDictType.FULL_STATE_DICT:
                 model_checkpointing.save_model_checkpoint(
                     model, optimizer, rank, fsdp_config, epoch=1
