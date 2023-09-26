@@ -106,10 +106,7 @@ class TaggingTracer(Tracer):
 custom_traced_graph: Graph = TaggingTracer().trace(M2())
 
 def assert_all_nodes_have_tags(g: Graph) -> bool:
-    for n in g.nodes:
-        if not hasattr(n, "tag") or not n.tag == "foo":
-            return False
-    return True
+    return not any(not hasattr(n, "tag") or n.tag != "foo" for n in g.nodes)
 
 # Prints "True"
 print(assert_all_nodes_have_tags(custom_traced_graph))

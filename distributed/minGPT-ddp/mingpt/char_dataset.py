@@ -25,7 +25,7 @@ class CharDataset(Dataset):
         print('Data has %d characters, %d unique.' % (data_size, vocab_size))
 
         self.stoi = {ch: i for i, ch in enumerate(chars)}
-        self.itos = {i: ch for i, ch in enumerate(chars)}
+        self.itos = dict(enumerate(chars))
         self.block_size = data_cfg.block_size
         self.vocab_size = vocab_size
         self.data = data

@@ -125,15 +125,14 @@ class InliningTracer(torch.fx.Tracer):
     FNS_TO_INLINE = [add_lowp]
 
     def create_node(self, kind, target, args, kwargs, name=None, type_expr=None):
-        if kind == 'call_function' and target in self.FNS_TO_INLINE:
-            tracer = torch.fx.proxy.GraphAppendingTracer(self.graph)
-            # Trace through the implementation of the function rather than
-            # create a node
-            proxy_args = torch.fx.node.map_arg(args, lambda x: torch.fx.Proxy(x, tracer))
-            proxy_kwargs = torch.fx.node.map_arg(kwargs, lambda x: torch.fx.Proxy(x, tracer))
-            return target(*proxy_args, **proxy_kwargs).node
-        else:
+        if kind != 'call_function' or target not in self.FNS_TO_INLINE:
             return super().create_node(kind, target, args, kwargs, name, type_expr)
+        tracer = torch.fx.proxy.GraphAppendingTracer(self.graph)
+        # Trace through the implementation of the function rather than
+        # create a node
+        proxy_args = torch.fx.node.map_arg(args, lambda x: torch.fx.Proxy(x, tracer))
+        proxy_kwargs = torch.fx.node.map_arg(kwargs, lambda x: torch.fx.Proxy(x, tracer))
+        return target(*proxy_args, **proxy_kwargs).node
 
 
 tracer = InliningTracer()

@@ -45,7 +45,7 @@ traced = symbolic_trace(M())
 #     3. `x.add(y)` - The Tensor method call, whose target we can match
 #         as a string.
 
-patterns = set([operator.add, torch.add, "add"])
+patterns = {operator.add, torch.add, "add"}
 
 # Go through all the nodes in the Graph
 for n in traced.graph.nodes:

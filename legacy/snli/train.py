@@ -16,7 +16,7 @@ from util import get_args, makedirs
 args = get_args()
 if torch.cuda.is_available():
     torch.cuda.set_device(args.gpu)
-    device = torch.device('cuda:{}'.format(args.gpu))
+    device = torch.device(f'cuda:{args.gpu}')
 elif torch.backends.mps.is_available():
     device = torch.device('mps')
 else:
@@ -75,7 +75,8 @@ for epoch in range(args.epochs):
     for batch_idx, batch in enumerate(train_iter):
 
         # switch model to training mode, clear gradient accumulators
-        model.train(); opt.zero_grad()
+        model.train()
+        opt.zero_grad()
 
         iterations += 1
 
@@ -91,14 +92,15 @@ for epoch in range(args.epochs):
         loss = criterion(answer, batch.label)
 
         # backpropagate and update optimizer learning rate
-        loss.backward(); opt.step()
+        loss.backward()
+        opt.step()
 
         # checkpoint model periodically
         if iterations % args.save_every == 0:
             snapshot_prefix = os.path.join(args.save_path, 'snapshot')
             snapshot_path = snapshot_prefix + '_acc_{:.4f}_loss_{:.6f}_iter_{}_model.pt'.format(train_acc, loss.item(), iterations)
             torch.save(model, snapshot_path)
-            for f in glob.glob(snapshot_prefix + '*'):
+            for f in glob.glob(f'{snapshot_prefix}*'):
                 if f != snapshot_path:
                     os.remove(f)
 
@@ -106,15 +108,16 @@ for epoch in range(args.epochs):
         if iterations % args.dev_every == 0:
 
             # switch model to evaluation mode
-            model.eval(); dev_iter.init_epoch()
+            model.eval()
+            dev_iter.init_epoch()
 
             # calculate accuracy on validation set
             n_dev_correct, dev_loss = 0, 0
             with torch.no_grad():
-                for dev_batch_idx, dev_batch in enumerate(dev_iter):
-                     answer = model(dev_batch)
-                     n_dev_correct += (torch.max(answer, 1)[1].view(dev_batch.label.size()) == dev_batch.label).sum().item()
-                     dev_loss = criterion(answer, dev_batch.label)
+                for dev_batch in dev_iter:
+                    answer = model(dev_batch)
+                    n_dev_correct += (torch.max(answer, 1)[1].view(dev_batch.label.size()) == dev_batch.label).sum().item()
+                    dev_loss = criterion(answer, dev_batch.label)
             dev_acc = 100. * n_dev_correct / len(dev)
 
             print(dev_log_template.format(time.time()-start,
@@ -128,11 +131,11 @@ for epoch in range(args.epochs):
 
                 best_dev_acc = dev_acc
                 snapshot_prefix = os.path.join(args.save_path, 'best_snapshot')
-                snapshot_path = snapshot_prefix + '_devacc_{}_devloss_{}__iter_{}_model.pt'.format(dev_acc, dev_loss.item(), iterations)
+                snapshot_path = f'{snapshot_prefix}_devacc_{dev_acc}_devloss_{dev_loss.item()}__iter_{iterations}_model.pt'
 
                 # save model, delete previous 'best_snapshot' files
                 torch.save(model, snapshot_path)
-                for f in glob.glob(snapshot_prefix + '*'):
+                for f in glob.glob(f'{snapshot_prefix}*'):
                     if f != snapshot_path:
                         os.remove(f)
 

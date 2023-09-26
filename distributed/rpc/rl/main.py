@@ -96,7 +96,7 @@ class Observer:
             n_steps (int): number of steps in this episode
         """
         state, ep_reward = self.env.reset()[0], 0
-        for step in range(n_steps):
+        for _ in range(n_steps):
             # send the state to the agent to get an action
             action = _remote_method(Agent.select_action, agent_rref, self.id, state)
 
@@ -153,17 +153,14 @@ class Agent:
         r"""
         Run one episode. The agent will tell each oberser to run n_steps.
         """
-        futs = []
-        for ob_rref in self.ob_rrefs:
-            # make async RPC to kick off an episode on all observers
-            futs.append(
-                rpc_async(
-                    ob_rref.owner(),
-                    _call_method,
-                    args=(Observer.run_episode, ob_rref, self.agent_rref, n_steps)
-                )
+        futs = [
+            rpc_async(
+                ob_rref.owner(),
+                _call_method,
+                args=(Observer.run_episode, ob_rref, self.agent_rref, n_steps),
             )
-
+            for ob_rref in self.ob_rrefs
+        ]
         # wait until all obervers have finished this episode
         for fut in futs:
             fut.wait()
@@ -184,7 +181,7 @@ class Agent:
             rewards.extend(self.rewards[ob_id])
 
         # use the minimum observer reward to calculate the running reward
-        min_reward = min([sum(self.rewards[ob_id]) for ob_id in self.rewards])
+        min_reward = min(sum(self.rewards[ob_id]) for ob_id in self.rewards)
         self.running_reward = 0.05 * min_reward + (1 - 0.05) * self.running_reward
 
         # clear saved probs and rewards
@@ -198,8 +195,7 @@ class Agent:
             returns.insert(0, R)
         returns = torch.tensor(returns)
         returns = (returns - returns.mean()) / (returns.std() + self.eps)
-        for log_prob, R in zip(probs, returns):
-            policy_loss.append(-log_prob * R)
+        policy_loss.extend(-log_prob * R for log_prob, R in zip(probs, returns))
         self.optimizer.zero_grad()
         policy_loss = torch.cat(policy_loss).sum()
         policy_loss.backward()
@@ -229,7 +225,7 @@ def run_worker(rank, world_size):
                       i_episode, last_reward, agent.running_reward))
 
             if agent.running_reward > agent.reward_threshold:
-                print("Solved! Running reward is now {}!".format(agent.running_reward))
+                print(f"Solved! Running reward is now {agent.running_reward}!")
                 break
     else:
         # other ranks are the observer

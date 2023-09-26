@@ -27,7 +27,7 @@ class Sequence(nn.Module):
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             output = self.linear(h_t2)
             outputs += [output]
-        for i in range(future):# if we should predict the future
+        for _ in range(future):
             h_t, c_t = self.lstm1(output, (h_t, c_t))
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             output = self.linear(h_t2)
@@ -82,7 +82,12 @@ if __name__ == '__main__':
         plt.yticks(fontsize=20)
         def draw(yi, color):
             plt.plot(np.arange(input.size(1)), yi[:input.size(1)], color, linewidth = 2.0)
-            plt.plot(np.arange(input.size(1), input.size(1) + future), yi[input.size(1):], color + ':', linewidth = 2.0)
+            plt.plot(
+                np.arange(input.size(1), input.size(1) + future),
+                yi[input.size(1) :],
+                f'{color}:',
+                linewidth=2.0,
+            )
         draw(y[0], 'r')
         draw(y[1], 'g')
         draw(y[2], 'b')

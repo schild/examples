@@ -52,8 +52,7 @@ class Net(nn.Module):
         x = F.relu(x)
         x = self.dropout2(x)
         x = self.fc2(x)
-        output = F.log_softmax(x, dim=1)
-        return output
+        return F.log_softmax(x, dim=1)
 
 
 # --------- Helper Methods --------------------
@@ -110,8 +109,7 @@ class ParameterServer(nn.Module):
     # Wrap local parameters in a RRef. Needed for building the
     # DistributedOptimizer which optimizes parameters remotely.
     def get_param_rrefs(self):
-        param_rrefs = [rpc.RRef(param) for param in self.model.parameters()]
-        return param_rrefs
+        return [rpc.RRef(param) for param in self.model.parameters()]
 
 
 param_server = None
@@ -154,15 +152,12 @@ class TrainerNet(nn.Module):
             "parameter_server", get_parameter_server, args=(num_gpus,))
 
     def get_global_param_rrefs(self):
-        remote_params = remote_method(
-            ParameterServer.get_param_rrefs,
-            self.param_server_rref)
-        return remote_params
+        return remote_method(
+            ParameterServer.get_param_rrefs, self.param_server_rref
+        )
 
     def forward(self, x):
-        model_output = remote_method(
-            ParameterServer.forward, self.param_server_rref, x)
-        return model_output
+        return remote_method(ParameterServer.forward, self.param_server_rref, x)
 
 
 def run_training_loop(rank, num_gpus, train_loader, test_loader):
@@ -200,7 +195,7 @@ def get_accuracy(test_loader, model):
     device = torch.device("cuda:0" if model.num_gpus > 0
         and torch.cuda.is_available() else "cpu")
     with torch.no_grad():
-        for i, (data, target) in enumerate(test_loader):
+        for data, target in test_loader:
             out = model(data)
             pred = out.argmax(dim=1, keepdim=True)
             pred, target = pred.to(device), target.to(device)
@@ -264,7 +259,6 @@ if __name__ == '__main__':
     assert args.num_gpus <= 3, f"Only 0-2 GPUs currently supported (got {args.num_gpus})."
     os.environ['MASTER_ADDR'] = args.master_addr
     os.environ['MASTER_PORT'] = args.master_port
-    processes = []
     world_size = args.world_size
 
     # Note that Linux uses "fork" by default, which may cause deadlock.
@@ -273,8 +267,6 @@ if __name__ == '__main__':
 
     if args.rank == 0:
         p = mp.Process(target=run_parameter_server, args=(0, world_size))
-        p.start()
-        processes.append(p)
     else:
         # Get data to train on
         train_loader = torch.utils.data.DataLoader(
@@ -299,8 +291,7 @@ if __name__ == '__main__':
                 world_size, args.num_gpus,
                 train_loader,
                 test_loader))
-        p.start()
-        processes.append(p)
-
+    p.start()
+    processes = [p]
     for p in processes:
         p.join()

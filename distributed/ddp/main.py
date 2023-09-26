@@ -69,7 +69,7 @@ def demo_checkpoint(rank, world_size):
     loss_fn = nn.MSELoss()
     optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
 
-    CHECKPOINT_PATH = tempfile.gettempdir() + "/model.checkpoint"
+    CHECKPOINT_PATH = f"{tempfile.gettempdir()}/model.checkpoint"
     if rank == 0:
         # All processes should see same parameters as they all start from same
         # random parameters and gradients are synchronized in backward passes.

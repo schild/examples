@@ -17,21 +17,19 @@ class PatchExtractor(nn.Module):
     def forward(self, input_data):
         batch_size, channels, height, width = input_data.size()
         assert height % self.patch_size == 0 and width % self.patch_size == 0, \
-            f"Input height ({height}) and width ({width}) must be divisible by patch size ({self.patch_size})"
+                f"Input height ({height}) and width ({width}) must be divisible by patch size ({self.patch_size})"
 
         num_patches_h = height // self.patch_size
         num_patches_w = width // self.patch_size
         num_patches = num_patches_h * num_patches_w
 
-        patches = input_data.unfold(2, self.patch_size, self.patch_size). \
-            unfold(3, self.patch_size, self.patch_size). \
-            permute(0, 2, 3, 1, 4, 5). \
-            contiguous(). \
-            view(batch_size, num_patches, -1)
-
-        # Expected shape of a patch on default settings is (4, 196, 768)
-
-        return patches
+        return (
+            input_data.unfold(2, self.patch_size, self.patch_size)
+            .unfold(3, self.patch_size, self.patch_size)
+            .permute(0, 2, 3, 1, 4, 5)
+            .contiguous()
+            .view(batch_size, num_patches, -1)
+        )
 
 
 class InputEmbedding(nn.Module):
@@ -92,9 +90,7 @@ class EncoderBlock(nn.Module):
         first_added = attention_out + emb_patches
         second_norm = self.norm(first_added)
         mlp_out = self.enc_MLP(second_norm)
-        output = mlp_out + first_added
-
-        return output
+        return mlp_out + first_added
 
 
 class ViT(nn.Module):

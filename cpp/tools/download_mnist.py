@@ -32,9 +32,9 @@ def report_download_progress(chunk_number, chunk_size, file_size):
 def download(destination_path, url, quiet):
     if os.path.exists(destination_path):
         if not quiet:
-            print('{} already exists, skipping ...'.format(destination_path))
+            print(f'{destination_path} already exists, skipping ...')
     else:
-        print('Downloading {} ...'.format(url))
+        print(f'Downloading {url} ...')
         try:
             hook = None if quiet else report_download_progress
             urlretrieve(url, destination_path, reporthook=hook)
@@ -50,13 +50,13 @@ def unzip(zipped_path, quiet):
     unzipped_path = os.path.splitext(zipped_path)[0]
     if os.path.exists(unzipped_path):
         if not quiet:
-            print('{} already exists, skipping ... '.format(unzipped_path))
+            print(f'{unzipped_path} already exists, skipping ... ')
         return
     with gzip.open(zipped_path, 'rb') as zipped_file:
         with open(unzipped_path, 'wb') as unzipped_file:
             unzipped_file.write(zipped_file.read())
             if not quiet:
-                print('Unzipped {} ...'.format(zipped_path))
+                print(f'Unzipped {zipped_path} ...')
 
 
 def main():
@@ -77,7 +77,7 @@ def main():
     try:
         for resource in RESOURCES:
             path = os.path.join(options.destination, resource)
-            url = 'http://yann.lecun.com/exdb/mnist/{}'.format(resource)
+            url = f'http://yann.lecun.com/exdb/mnist/{resource}'
             download(path, url, options.quiet)
             unzip(path, options.quiet)
     except KeyboardInterrupt:
